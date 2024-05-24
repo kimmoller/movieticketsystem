@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: movieticketsystem
+  datasource:
+    url: jdbc:postgres://localhost:5432/postgres
+    username: postgres
+    password: postgres
+
