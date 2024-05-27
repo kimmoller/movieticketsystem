@@ -13,5 +13,5 @@ data class Hall(
     @ManyToOne
     var theater: Theater,
 
-    var number: Number
+    var number: Int
 )

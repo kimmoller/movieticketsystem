@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.jdbc.Sql
+import java.time.OffsetDateTime
 
 class MovieControllerTest : ControllerTest() {
     @Autowired
@@ -58,21 +59,24 @@ class MovieControllerTest : ControllerTest() {
     @Sql(statements = [
         "insert into theater(name, location) values('Bio', 'Lund')",
         "insert into hall(theater_id, number) values((select id from theater where name='Bio'), 1)",
-        """
-            insert into movie(name, runtime, description, genre)
-            values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy');
-        """,
-        """
-            insert into movie_schedule(movie_id, schedule, hall_id)
-            values(
-            (select id from movie where name='comedyFilm'), 
-            '2024-05-25T15:15:00',
-            (select id from hall where theater_id=(select id from theater where name='Bio')
-            and number=1))
-        """
+        "insert into movie(name, runtime, description, genre) " +
+                "values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy')",
+        "insert into movie_schedule(movie_id, schedule, hall_id) values((select id from movie where name='comedyFilm'), " +
+                "'2024-05-25T15:15:00', (select id from hall where theater_id=(select id from theater where name='Bio')and number=1))"
     ])
     fun testGetMovieSchedules() {
         val schedules = movieController.getMovieSchedules(null, null, null).body
-        assertEquals(0, schedules?.size)
+        assertEquals(1, schedules?.size)
+
+        val schedule = schedules?.get(0)
+        val hall = schedule?.hall
+        val movie = schedule?.movie
+
+        assertEquals("Bio", hall?.theater?.name)
+        assertEquals("Lund", hall?.theater?.location)
+
+        assertEquals("comedyFilm", movie?.name)
+
+        assertEquals(OffsetDateTime.parse("2024-05-25T13:15:00Z"), schedule?.schedule)
     }
 }
