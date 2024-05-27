@@ -96,7 +96,6 @@ class MovieControllerTest : ControllerTest() {
     fun testGetMovieSchedule() {
         val schedule = movieController.getMovieSchedule(2).body
         assertEquals(OffsetDateTime.parse("2024-05-25T15:30:00Z"), schedule?.schedule)
-        val hall = schedule?.hall
-        assertEquals(1, hall?.seats?.size)
+        assertEquals(false, schedule?.seats?.get(0)?.isReserved)
     }
 }

@@ -21,5 +21,8 @@ data class MovieSchedule(
     @NotNull
     @ManyToOne
     @JoinColumn(name = "hall_id")
-    var hall: Hall
+    var hall: Hall,
+
+    @OneToMany(mappedBy = "id")
+    var reservations: List<Reservation>
 )

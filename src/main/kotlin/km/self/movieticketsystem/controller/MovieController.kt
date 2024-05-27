@@ -1,6 +1,7 @@
 package km.self.movieticketsystem.controller
 
 import jakarta.websocket.server.PathParam
+import km.self.movieticketsystem.dto.MovieScheduleDto
 import km.self.movieticketsystem.entity.Movie
 import km.self.movieticketsystem.entity.MovieSchedule
 import km.self.movieticketsystem.service.MovieService
@@ -30,7 +31,7 @@ class MovieController(private val movieService: MovieService) {
     }
 
     @GetMapping("/movie/schedule/:id")
-    fun getMovieSchedule(@PathParam("id") id: Long): ResponseEntity<MovieSchedule> {
+    fun getMovieSchedule(@PathParam("id") id: Long): ResponseEntity<MovieScheduleDto> {
         val schedule = movieService.getMovieSchedule(id)
         return ResponseEntity(schedule, HttpStatus.OK)
     }

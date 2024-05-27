@@ -1,7 +1,9 @@
 package km.self.movieticketsystem.service
 
+import km.self.movieticketsystem.dto.MovieScheduleDto
 import km.self.movieticketsystem.entity.Movie
 import km.self.movieticketsystem.entity.MovieSchedule
+import km.self.movieticketsystem.entity.Seat
 import km.self.movieticketsystem.repository.MovieRepository
 import km.self.movieticketsystem.repository.MovieScheduleRepository
 import org.springframework.stereotype.Service
@@ -22,7 +24,8 @@ class MovieService(
         return movieScheduleRepository.findAll()
     }
 
-    fun getMovieSchedule(id: Long): MovieSchedule {
-        return movieScheduleRepository.findById(id).orElseThrow()
+    fun getMovieSchedule(id: Long): MovieScheduleDto {
+        val movieSchedule = movieScheduleRepository.findById(id).orElseThrow()
+        return MovieScheduleDto().from(movieSchedule)
     }
 }
