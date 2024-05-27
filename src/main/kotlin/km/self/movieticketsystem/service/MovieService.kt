@@ -21,4 +21,8 @@ class MovieService(
     fun getMovieSchedules(): List<MovieSchedule> {
         return movieScheduleRepository.findAll()
     }
+
+    fun getMovieSchedule(id: Long): MovieSchedule {
+        return movieScheduleRepository.findById(id).orElseThrow()
+    }
 }

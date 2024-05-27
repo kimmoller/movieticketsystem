@@ -79,4 +79,24 @@ class MovieControllerTest : ControllerTest() {
 
         assertEquals(OffsetDateTime.parse("2024-05-25T13:15:00Z"), schedule?.schedule)
     }
+
+    @Test
+    @Sql(statements = [
+        "insert into theater(name, location) values('Bio', 'Lund')",
+        "insert into hall(theater_id, number) values((select id from theater where name='Bio'), 1)",
+        "insert into seat(row, number, hall_id) values(1, 1, " +
+                "(select id from hall where theater_id=(select id from theater where name='Bio')and number=1))",
+        "insert into movie(name, runtime, description, genre) " +
+                "values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy')",
+        "insert into movie_schedule(movie_id, schedule, hall_id) values((select id from movie where name='comedyFilm'), " +
+                "'2024-05-25T15:15:00', (select id from hall where theater_id=(select id from theater where name='Bio')and number=1))",
+        "insert into movie_schedule(movie_id, schedule, hall_id) values((select id from movie where name='comedyFilm'), " +
+                "'2024-05-25T17:30:00', (select id from hall where theater_id=(select id from theater where name='Bio')and number=1))"
+    ])
+    fun testGetMovieSchedule() {
+        val schedule = movieController.getMovieSchedule(2).body
+        assertEquals(OffsetDateTime.parse("2024-05-25T15:30:00Z"), schedule?.schedule)
+        val hall = schedule?.hall
+        assertEquals(1, hall?.seats?.size)
+    }
 }
