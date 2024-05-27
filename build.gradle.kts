@@ -46,10 +46,4 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
-//buildscript {
-//	dependencies {
-//		classpath("org.jetbrains.kotlin:kotlin-noarg:$kotlin")
-//	}
-//}
-
 apply(plugin = "kotlin-jpa")

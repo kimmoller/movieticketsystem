@@ -1,6 +1,7 @@
 package km.self.movieticketsystem.controller
 
 import km.self.movieticketsystem.repository.MovieRepository
+import km.self.movieticketsystem.repository.MovieScheduleRepository
 import km.self.movieticketsystem.service.MovieService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -11,12 +12,14 @@ import org.springframework.test.context.jdbc.Sql
 class MovieControllerTest : ControllerTest() {
     @Autowired
     lateinit var movieRepository: MovieRepository
+    @Autowired
+    lateinit var movieScheduleRepository: MovieScheduleRepository
 
     lateinit var movieController: MovieController
 
     @BeforeEach
     fun setUp() {
-        val movieService = MovieService(movieRepository)
+        val movieService = MovieService(movieRepository, movieScheduleRepository)
         movieController = MovieController(movieService)
     }
 
@@ -49,5 +52,27 @@ class MovieControllerTest : ControllerTest() {
         assertEquals(2, movies?.size)
         assertEquals("Comedy", movies?.get(0)?.genre)
         assertEquals("Comedy", movies?.get(1)?.genre)
+    }
+
+    @Test
+    @Sql(statements = [
+        "insert into theater(name, location) values('Bio', 'Lund')",
+        "insert into hall(theater_id, number) values((select id from theater where name='Bio'), 1)",
+        """
+            insert into movie(name, runtime, description, genre)
+            values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy');
+        """,
+        """
+            insert into movie_schedule(movie_id, schedule, hall_id)
+            values(
+            (select id from movie where name='comedyFilm'), 
+            '2024-05-25T15:15:00',
+            (select id from hall where theater_id=(select id from theater where name='Bio')
+            and number=1))
+        """
+    ])
+    fun testGetMovieSchedules() {
+        val schedules = movieController.getMovieSchedules(null, null, null).body
+        assertEquals(0, schedules?.size)
     }
 }
