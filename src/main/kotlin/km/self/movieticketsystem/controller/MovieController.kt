@@ -8,19 +8,21 @@ import km.self.movieticketsystem.service.MovieService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.OffsetDateTime
 
 @RestController
+@RequestMapping("movie")
 class MovieController(private val movieService: MovieService) {
-    @GetMapping("/movie")
+    @GetMapping("/")
     fun getMovies(@RequestParam genre: String?): ResponseEntity<List<Movie>> {
         val movies = movieService.getMovies(genre)
         return ResponseEntity(movies, HttpStatus.OK)
     }
 
-    @GetMapping("/movie/schedule")
+    @GetMapping("/schedule")
     fun getMovieSchedules(
         @RequestParam theater: Long?,
         @RequestParam day: OffsetDateTime?,
@@ -30,7 +32,7 @@ class MovieController(private val movieService: MovieService) {
         return ResponseEntity(schedules, HttpStatus.OK)
     }
 
-    @GetMapping("/movie/schedule/:id")
+    @GetMapping("/schedule/:id")
     fun getMovieSchedule(@PathParam("id") id: Long): ResponseEntity<MovieScheduleDto> {
         try {
             val schedule = movieService.getMovieSchedule(id)
