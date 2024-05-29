@@ -1,43 +1,45 @@
 package km.self.movieticketsystem.controller
 
+import km.self.movieticketsystem.entity.*
 import km.self.movieticketsystem.repository.MovieRepository
 import km.self.movieticketsystem.repository.MovieScheduleRepository
 import km.self.movieticketsystem.service.MovieService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
+import org.mockito.Mock
+import org.mockito.Mockito
 import org.springframework.http.HttpStatus
-import org.springframework.test.context.jdbc.Sql
 import java.time.OffsetDateTime
+import java.util.*
 
-class MovieControllerTest: ControllerTest() {
-    @Autowired
+class MovieControllerTest {
+    @Mock
     lateinit var movieRepository: MovieRepository
-    @Autowired
+    @Mock
     lateinit var movieScheduleRepository: MovieScheduleRepository
 
     lateinit var movieController: MovieController
 
     @BeforeEach
     fun setUp() {
+        movieRepository = Mockito.mock(MovieRepository::class.java)
+        movieScheduleRepository = Mockito.mock(MovieScheduleRepository::class.java)
         val movieService = MovieService(movieRepository, movieScheduleRepository)
         movieController = MovieController(movieService)
     }
 
     @Test
-    @Sql(statements = [
-        """insert into movie(name, runtime, description, genre)
-            values('testMovie', '2h 30m', 'Test description', 'Comedy');"""
-    ])
     fun testGetAllMovies() {
+        val mockMovie = Movie(1, "Action Film", "1h 30m", "An action film", "Action")
+        Mockito.`when`(movieRepository.findAll()).thenReturn(listOf(mockMovie))
         val movies = movieController.getMovies(null)
         assertEquals(1, movies.body?.size)
         val movie = movies.body?.get(0)
-        assertEquals("testMovie", movie?.name)
-        assertEquals("2h 30m", movie?.runtime)
-        assertEquals("Test description", movie?.description)
-        assertEquals("Comedy", movie?.genre)
+        assertEquals("Action Film", movie?.name)
+        assertEquals("1h 30m", movie?.runtime)
+        assertEquals("An action film", movie?.description)
+        assertEquals("Action", movie?.genre)
     }
 
     @Test
@@ -47,31 +49,17 @@ class MovieControllerTest: ControllerTest() {
     }
 
     @Test
-    @Sql(statements = [
-        """insert into movie(name, runtime, description, genre)
-            values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy');""",
-        """insert into movie(name, runtime, description, genre)
-            values('comedyFilm2', '1h 40m', 'Second comedy film', 'Comedy');""",
-        """insert into movie(name, runtime, description, genre)
-            values('actionMovie', '2h 30m', 'Long action movie', 'Action');"""
-    ])
     fun testGetMoviesFilteredByGenre() {
-        val movies = movieController.getMovies("Comedy").body
-        assertEquals(2, movies?.size)
-        assertEquals("Comedy", movies?.get(0)?.genre)
-        assertEquals("Comedy", movies?.get(1)?.genre)
+        val movie = Movie(1, "Action Film", "1h30m", "An action film", "Action")
+        Mockito.`when`(movieRepository.findByGenre("Action")).thenReturn(listOf(movie))
+        val movies = movieController.getMovies("Action").body
+        assertEquals(1, movies?.size)
+        assertEquals("Action", movies?.get(0)?.genre)
     }
 
     @Test
-    @Sql(statements = [
-        "insert into theater(name, location) values('Bio', 'Lund')",
-        "insert into hall(theater_id, number) values((select id from theater where name='Bio'), 1)",
-        "insert into movie(name, runtime, description, genre) " +
-                "values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy')",
-        "insert into movie_schedule(movie_id, schedule, hall_id) values((select id from movie where name='comedyFilm'), " +
-                "'2024-05-25T15:15:00', (select id from hall where theater_id=(select id from theater where name='Bio')and number=1))"
-    ])
     fun testGetMovieSchedules() {
+        mockBaseData()
         val schedules = movieController.getMovieSchedules(null, null, null).body
         assertEquals(1, schedules?.size)
 
@@ -79,12 +67,12 @@ class MovieControllerTest: ControllerTest() {
         val hall = schedule?.hall
         val movie = schedule?.movie
 
-        assertEquals("Bio", hall?.theater?.name)
+        assertEquals("Theater", hall?.theater?.name)
         assertEquals("Lund", hall?.theater?.location)
 
-        assertEquals("comedyFilm", movie?.name)
+        assertEquals("Comedy Film", movie?.name)
 
-        assertEquals(OffsetDateTime.parse("2024-05-25T13:15:00Z"), schedule?.schedule)
+        assertEquals(OffsetDateTime.parse("2024-06-15T12:00:00Z"), schedule?.schedule)
     }
 
     @Test
@@ -94,21 +82,10 @@ class MovieControllerTest: ControllerTest() {
     }
 
     @Test
-    @Sql(statements = [
-        "insert into theater(name, location) values('Bio', 'Lund')",
-        "insert into hall(theater_id, number) values((select id from theater where name='Bio'), 1)",
-        "insert into seat(row, number, hall_id) values(1, 1, " +
-                "(select id from hall where theater_id=(select id from theater where name='Bio')and number=1))",
-        "insert into movie(name, runtime, description, genre) " +
-                "values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy')",
-        "insert into movie_schedule(movie_id, schedule, hall_id) values((select id from movie where name='comedyFilm'), " +
-                "'2024-05-25T15:15:00', (select id from hall where theater_id=(select id from theater where name='Bio')and number=1))",
-        "insert into movie_schedule(movie_id, schedule, hall_id) values((select id from movie where name='comedyFilm'), " +
-                "'2024-05-25T17:30:00', (select id from hall where theater_id=(select id from theater where name='Bio')and number=1))"
-    ])
     fun testGetMovieSchedule() {
-        val schedule = movieController.getMovieSchedule(2).body
-        assertEquals(OffsetDateTime.parse("2024-05-25T15:30:00Z"), schedule?.schedule)
+        mockBaseData()
+        val schedule = movieController.getMovieSchedule(1).body
+        assertEquals(OffsetDateTime.parse("2024-06-15T12:00:00Z"), schedule?.schedule)
 
         val seat = schedule?.seats?.get(0)
         assertEquals(1, seat?.id)
@@ -117,24 +94,29 @@ class MovieControllerTest: ControllerTest() {
         assertEquals(false, seat?.isReserved)
 
         val movie = schedule?.movie
-        assertEquals("comedyFilm", movie?.name)
+        assertEquals("Comedy Film", movie?.name)
 
         val hall = schedule?.hall
-        assertEquals("Bio", hall?.theater?.name)
+        assertEquals("Theater", hall?.theater?.name)
         assertEquals(1, hall?.number)
     }
 
     @Test
-    @Sql(statements = [
-        "insert into theater(name, location) values('Bio', 'Lund')",
-        "insert into hall(theater_id, number) values((select id from theater where name='Bio'), 1)",
-        "insert into seat(row, number, hall_id) values(1, 1, " +
-                "(select id from hall where theater_id=(select id from theater where name='Bio')and number=1))",
-        "insert into movie(name, runtime, description, genre) " +
-                "values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy')"
-    ])
     fun testGetMovieSchedule_whenScheduleNotFound_throwError404() {
         val response = movieController.getMovieSchedule(1)
         assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+    }
+
+    private fun mockBaseData() {
+        val theater = Theater(1, "Theater", "Lund")
+
+        val seat = Seat(1, 1, 1)
+        val seats = listOf(seat)
+        val hall = Hall(1, theater, 1, seats)
+
+        val movie = Movie(1, "Comedy Film", "1h30m", "A comedy film", "Comedy")
+        val movieSchedule = MovieSchedule(1, movie, OffsetDateTime.parse("2024-06-15T12:00:00Z"), hall, listOf())
+        Mockito.`when`(movieScheduleRepository.findAll()).thenReturn(listOf(movieSchedule))
+        Mockito.`when`(movieScheduleRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(movieSchedule))
     }
 }
