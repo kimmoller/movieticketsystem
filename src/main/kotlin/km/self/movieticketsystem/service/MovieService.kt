@@ -13,7 +13,6 @@ class MovieService(
     private val movieRepository: MovieRepository,
     private val movieScheduleRepository: MovieScheduleRepository
 ) {
-    @Transactional
     fun getMovies(genre: String?): List<Movie> {
         genre?.let {
             return movieRepository.findByGenre(genre)
@@ -21,12 +20,10 @@ class MovieService(
         return movieRepository.findAll()
     }
 
-    @Transactional
     fun getMovieSchedules(): List<MovieSchedule> {
         return movieScheduleRepository.findAll()
     }
 
-    @Transactional
     fun getMovieSchedule(id: Long): MovieScheduleDto {
         val movieSchedule = movieScheduleRepository.findById(id).orElseThrow()
         return MovieScheduleDto().from(movieSchedule)

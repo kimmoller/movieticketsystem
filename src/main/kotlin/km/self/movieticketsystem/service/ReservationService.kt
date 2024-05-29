@@ -1,5 +1,6 @@
 package km.self.movieticketsystem.service
 
+import jakarta.transaction.Transactional
 import km.self.movieticketsystem.dto.ReservationDto
 import km.self.movieticketsystem.entity.Reservation
 import km.self.movieticketsystem.repository.IdentityRepository
@@ -15,6 +16,7 @@ class ReservationService(
     val seatRepository: SeatRepository,
     val reservationRepository: ReservationRepository
 ) {
+    @Transactional
     fun reserveTickets(reservationDto: ReservationDto) {
         val identity = identityRepository.findById(reservationDto.identityId).orElseThrow()
 
