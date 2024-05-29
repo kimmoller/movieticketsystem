@@ -65,3 +65,4 @@ CREATE TABLE IF NOT EXISTS reservation(
 
 CREATE INDEX reservation_id_movie_schedule_id ON reservation(id, movie_schedule_id);
 CREATE INDEX reservation_id_identity_id ON reservation(id, identity_id);
+CREATE UNIQUE INDEX reservation_movie_schedule_seat_id ON reservation(movie_schedule_id, seat_id)

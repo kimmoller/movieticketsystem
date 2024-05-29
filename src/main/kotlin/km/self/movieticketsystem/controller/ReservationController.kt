@@ -2,7 +2,7 @@ package km.self.movieticketsystem.controller
 
 import km.self.movieticketsystem.dto.ReservationDto
 import km.self.movieticketsystem.service.ReservationService
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -14,7 +14,15 @@ class ReservationController(val reservationService: ReservationService) {
 
     @PostMapping("/reserve/movie")
     fun reserveTickets(@RequestBody reservationDto: ReservationDto): ResponseEntity<Nothing> {
-        reservationService.reserveTickets(reservationDto)
-        return ResponseEntity(null, HttpStatus.OK)
+        try {
+            reservationService.reserveTickets(reservationDto)
+            return ResponseEntity(null, HttpStatus.OK)
+        } catch (error: NoSuchElementException) {
+            return ResponseEntity(null, HttpStatus.NOT_FOUND)
+        } catch (error: DataIntegrityViolationException) {
+            return ResponseEntity(null, HttpStatus.CONFLICT)
+        } catch (error: Error) {
+            return ResponseEntity(null, HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 }

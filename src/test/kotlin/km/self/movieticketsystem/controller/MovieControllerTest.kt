@@ -1,28 +1,15 @@
 package km.self.movieticketsystem.controller
 
-import km.self.movieticketsystem.repository.MovieRepository
-import km.self.movieticketsystem.repository.MovieScheduleRepository
-import km.self.movieticketsystem.service.MovieService
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.test.context.jdbc.Sql
 import java.time.OffsetDateTime
 
-class MovieControllerTest : ControllerTest() {
+class MovieControllerTest: ControllerTest() {
     @Autowired
-    lateinit var movieRepository: MovieRepository
-    @Autowired
-    lateinit var movieScheduleRepository: MovieScheduleRepository
-
     lateinit var movieController: MovieController
-
-    @BeforeEach
-    fun setUp() {
-        val movieService = MovieService(movieRepository, movieScheduleRepository)
-        movieController = MovieController(movieService)
-    }
 
     @Test
     @Sql(statements = [
@@ -37,6 +24,12 @@ class MovieControllerTest : ControllerTest() {
         assertEquals("2h 30m", movie?.runtime)
         assertEquals("Test description", movie?.description)
         assertEquals("Comedy", movie?.genre)
+    }
+
+    @Test
+    fun testGetMovies_whenNoMovies_returnsEmptyList() {
+        val movies = movieController.getMovies(null).body
+        assertEquals(0, movies?.size)
     }
 
     @Test
@@ -81,6 +74,12 @@ class MovieControllerTest : ControllerTest() {
     }
 
     @Test
+    fun testGetMovieSchedules_whenNoSchedulesFound_returnsEmptyList() {
+        val schedules = movieController.getMovieSchedules(null, null, null).body
+        assertEquals(0, schedules?.size)
+    }
+
+    @Test
     @Sql(statements = [
         "insert into theater(name, location) values('Bio', 'Lund')",
         "insert into hall(theater_id, number) values((select id from theater where name='Bio'), 1)",
@@ -109,5 +108,19 @@ class MovieControllerTest : ControllerTest() {
         val hall = schedule?.hall
         assertEquals("Bio", hall?.theater?.name)
         assertEquals(1, hall?.number)
+    }
+
+    @Test
+    @Sql(statements = [
+        "insert into theater(name, location) values('Bio', 'Lund')",
+        "insert into hall(theater_id, number) values((select id from theater where name='Bio'), 1)",
+        "insert into seat(row, number, hall_id) values(1, 1, " +
+                "(select id from hall where theater_id=(select id from theater where name='Bio')and number=1))",
+        "insert into movie(name, runtime, description, genre) " +
+                "values('comedyFilm', '1h 30m', 'First comedy film', 'Comedy')"
+    ])
+    fun testGetMovieSchedule_whenScheduleNotFound_throwError404() {
+        val response = movieController.getMovieSchedule(1)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
     }
 }
