@@ -1,8 +1,13 @@
 package km.self.movieticketsystem.controller
 
 import km.self.movieticketsystem.dto.ReservationDto
+import km.self.movieticketsystem.repository.IdentityRepository
+import km.self.movieticketsystem.repository.MovieScheduleRepository
 import km.self.movieticketsystem.repository.ReservationRepository
+import km.self.movieticketsystem.repository.SeatRepository
+import km.self.movieticketsystem.service.ReservationService
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -11,9 +16,26 @@ import java.time.OffsetDateTime
 
 class ReservationControllerTest: ControllerTest() {
     @Autowired
-    private lateinit var reservationRepository: ReservationRepository
+    lateinit var identityRepository: IdentityRepository
     @Autowired
-    private lateinit var reservationController: ReservationController
+    lateinit var movieScheduleRepository: MovieScheduleRepository
+    @Autowired
+    lateinit var seatRepository: SeatRepository
+    @Autowired
+    lateinit var reservationRepository: ReservationRepository
+
+    lateinit var reservationController: ReservationController
+
+    @BeforeEach
+    fun setUp() {
+        val reservationService = ReservationService(
+            identityRepository,
+            movieScheduleRepository,
+            seatRepository,
+            reservationRepository)
+
+        reservationController = ReservationController(reservationService)
+    }
 
     @Test
     @Sql(statements = [

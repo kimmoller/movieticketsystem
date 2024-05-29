@@ -1,6 +1,10 @@
 package km.self.movieticketsystem.controller
 
+import km.self.movieticketsystem.repository.MovieRepository
+import km.self.movieticketsystem.repository.MovieScheduleRepository
+import km.self.movieticketsystem.service.MovieService
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -9,7 +13,17 @@ import java.time.OffsetDateTime
 
 class MovieControllerTest: ControllerTest() {
     @Autowired
+    lateinit var movieRepository: MovieRepository
+    @Autowired
+    lateinit var movieScheduleRepository: MovieScheduleRepository
+
     lateinit var movieController: MovieController
+
+    @BeforeEach
+    fun setUp() {
+        val movieService = MovieService(movieRepository, movieScheduleRepository)
+        movieController = MovieController(movieService)
+    }
 
     @Test
     @Sql(statements = [
